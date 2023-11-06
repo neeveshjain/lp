@@ -1,0 +1,95 @@
+//Complier: https://remix.ethereum.org/
+// SPDX-License-Identifier: MIT
+pragma solidity >=0.7.0;
+
+contract Bank {
+    struct Account {
+        uint balance;
+    }
+
+    mapping(address => mapping(uint => Account)) public user_accounts;
+    mapping(address => uint) public numAccounts;
+
+    function createAccount(uint accountId) public {
+        require(accountId > 0, "Account ID should be greater than 0");
+        require(user_accounts[msg.sender][accountId].balance == 0, "Account already created with this ID");
+
+        user_accounts[msg.sender][accountId] = Account({
+            balance: 0
+        });
+        numAccounts[msg.sender]++;
+    }
+
+    function deposit(uint accountId, uint amount) public {
+        require(accountId > 0, "Account ID should be greater than 0");
+        require(user_accounts[msg.sender][accountId].balance >= 0, "Account not created with this ID");
+
+        user_accounts[msg.sender][accountId].balance += amount;
+    }
+
+    function withdraw(uint accountId, uint amount) public {
+        require(accountId > 0, "Account ID should be greater than 0");
+        require(user_accounts[msg.sender][accountId].balance >= amount, "Insufficient balance in the account");
+
+        user_accounts[msg.sender][accountId].balance -= amount;
+    }
+
+    function getBalance(uint accountId) public view returns (uint) {
+        require(accountId > 0, "Account ID should be greater than 0");
+        require(user_accounts[msg.sender][accountId].balance >= 0, "Account not created with this ID");
+
+        return user_accounts[msg.sender][accountId].balance;
+    }
+
+    function transfer(uint fromAccountId, uint toAccountId, uint amount) public {
+        require(fromAccountId > 0 && toAccountId > 0, "Account ID should be greater than 0");
+        require(user_accounts[msg.sender][fromAccountId].balance >= amount, "Insufficient balance in the source account");
+
+        user_accounts[msg.sender][fromAccountId].balance -= amount;
+        user_accounts[msg.sender][toAccountId].balance += amount;
+    }
+}
+
+---
+
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract StudentData {
+    struct Student {
+        string name;
+        uint256 rollNumber;
+        uint256 age;
+    }
+
+    Student[] public students;
+    address public owner;
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only the owner can perform this operation");
+        _;
+    }
+
+    function addStudent(string memory _name, uint256 _rollNumber, uint256 _age) public onlyOwner {
+        Student memory newStudent = Student(_name, _rollNumber, _age);
+        students.push(newStudent);
+    }
+
+    function getStudentCount() public view returns (uint256) {
+        return students.length;
+    }
+
+    function getStudent(uint256 index) public view returns (string memory, uint256, uint256) {
+        require(index < students.length, "Invalid index");
+        Student memory student = students[index];
+        return (student.name, student.rollNumber, student.age);
+    }
+
+    fallback() external {
+        revert("Fallback function: This contract does not accept Ether.");
+    }
+}
